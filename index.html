@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Карта проверок — Сергиев Посад</title>
+
+  <!-- Telegram Mini App -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Yandex Maps -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=3b8d4e93-e8bd-493b-890e-d985fd8d1b3c&lang=ru_RU"></script>
+
+  <style>
+    html, body, #map {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+ymaps.ready(() => {
+
+  const CITY_CENTER = [56.3069, 38.1503]; // Сергиев Посад
+  const MAX_DISTANCE_KM = 15;
+
+  const map = new ymaps.Map("map", {
+    center: CITY_CENTER,
+    zoom: 12,
+    controls: ['zoomControl']
+  });
+
+  // Круг ограничения 15 км
+  const limitCircle = new ymaps.Circle(
+    [CITY_CENTER, MAX_DISTANCE_KM * 1000],
+    {},
+    {
+      fillColor: "rgba(255,0,0,0.05)",
+      strokeColor: "#ff0000",
+      strokeWidth: 2,
+      strokeOpacity: 0.6
+    }
+  );
+  map.geoObjects.add(limitCircle);
+
+  // Загрузка сохранённых точек
+  loadPoints();
+
+  // Клик по карте
+  map.events.add('click', (e) => {
+    const coords = e.get('coords');
+
+    if (!insideRadius(coords)) {
+      alert("❌ За пределами округа (15 км)");
+      return;
+    }
+
+    addPoint(coords);
+    savePoint(coords);
+  });
+
+  function addPoint(coords) {
+    const placemark = new ymaps.Placemark(
+      coords,
+      { balloonContent: "🚓 Проверка" },
+      { preset: "islands#redIcon" }
+    );
+    map.geoObjects.add(placemark);
+  }
+
+  function savePoint(coords) {
+    const points = JSON.parse(localStorage.getItem("points")) || [];
+    points.push(coords);
+    localStorage.setItem("points", JSON.stringify(points));
+  }
+
+  function loadPoints() {
+    const points = JSON.parse(localStorage.getItem("points")) || [];
+    points.forEach(coords => addPoint(coords));
+  }
+
+  function insideRadius(coords) {
+    const distance = ymaps.coordSystem.geo.getDistance(CITY_CENTER, coords);
+    return distance <= MAX_DISTANCE_KM * 1000;
+  }
+
+});
+</script>
+
+</body>
+</html>
