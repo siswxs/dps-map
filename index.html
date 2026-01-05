@@ -27,6 +27,7 @@ ymaps.ready(() => {
 
   const CITY_CENTER = [56.3069, 38.1503]; // Сергиев Посад
   const MAX_DISTANCE_KM = 15;
+  const API_URL = "https://script.google.com/macros/s/AKfycbxZFmcB-chOleBYl1pMzgokDvi4Jg_dlAMMUVdVSAqWHIpqfUgH94acmGxAQZODo2bwHA/exec";
 
   const map = new ymaps.Map("map", {
     center: CITY_CENTER,
@@ -47,7 +48,7 @@ ymaps.ready(() => {
   );
   map.geoObjects.add(limitCircle);
 
-  // Загрузка сохранённых точек
+  // Загрузка точек с Google Sheets
   loadPoints();
 
   // Клик по карте
@@ -73,14 +74,17 @@ ymaps.ready(() => {
   }
 
   function savePoint(coords) {
-    const points = JSON.parse(localStorage.getItem("points")) || [];
-    points.push(coords);
-    localStorage.setItem("points", JSON.stringify(points));
+    fetch(API_URL + "?action=add&lat=" + coords[0] + "&lon=" + coords[1])
+      .then(res => res.text())
+      .then(res => console.log(res));
   }
 
   function loadPoints() {
-    const points = JSON.parse(localStorage.getItem("points")) || [];
-    points.forEach(coords => addPoint(coords));
+    fetch(API_URL + "?action=get")
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(coords => addPoint(coords));
+      });
   }
 
   function insideRadius(coords) {
